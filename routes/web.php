@@ -8,8 +8,8 @@ Auth::routes();
 
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('auth.login');
+})->name('login');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
