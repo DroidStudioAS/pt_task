@@ -39,8 +39,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('home');
 
     // User Management
-    Route::resource('users', UserController::class)->middleware('can:user-management');
-    Route::resource('permissions', PermissionController::class)->middleware('can:user-management');
+    Route::resource('users', UserController::class);
+    Route::resource('permissions', PermissionController::class);
 
     // Data Import
     Route::get('/import', [ImportController::class, 'index'])->name('import.index');

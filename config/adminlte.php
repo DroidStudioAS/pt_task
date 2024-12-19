@@ -299,24 +299,7 @@ return [
     */
 
     'menu' => [
-        // User Management section
-        [
-            'text' => 'User Management',
-            'icon' => 'fas fa-users',
-            'can'  => 'user-management',
-            'submenu' => [
-                [
-                    'text' => 'Users',
-                    'url'  => '/users',
-                    'icon' => 'fas fa-user',
-                ],
-                [
-                    'text' => 'Permissions',
-                    'url'  => '/permissions',
-                    'icon' => 'fas fa-key',
-                ],
-            ],
-        ],
+
 
         // Data Import section
         [
@@ -337,6 +320,24 @@ return [
                 ],
             ],
         ],
+
+                // User Management section
+                [
+                    'text' => 'User Management',
+                    'icon' => 'fas fa-users',
+                    'submenu' => [
+                        [
+                            'text' => 'Users',
+                            'url'  => '/users',
+                            'icon' => 'fas fa-user',
+                        ],
+                        [
+                            'text' => 'Permissions',
+                            'url'  => '/permissions',
+                            'icon' => 'fas fa-key',
+                        ],
+                    ],
+                ],
 
         // Imports History section
         [

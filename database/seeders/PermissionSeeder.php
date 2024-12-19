@@ -14,19 +14,13 @@ class PermissionSeeder extends Seeder
         // Create user-management permission
         $permission = Permission::create([
             'name' => 'user-management',
-            'description' => 'Manage users and their permissions'
+            'description' => 'Can manage users and their permissions'
         ]);
 
-        // Create admin user if it doesn't exist
-        $user = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('password'),
-            ]
-        );
-
-        // Assign permission to admin
-        $user->permissions()->sync([$permission->id]);
+        // Get admin user
+        $user = User::where('email', 'admin@example.com')->first();
+        
+        // Attach permission to admin
+        $user->permissions()->attach($permission);
     }
 } 
