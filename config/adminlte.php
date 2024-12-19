@@ -299,98 +299,50 @@ return [
     */
 
     'menu' => [
-        // Navbar items:
+        // User Management section
         [
-            'type' => 'navbar-search',
-            'text' => 'search',
-            'topnav_right' => true,
-        ],
-        [
-            'type' => 'fullscreen-widget',
-            'topnav_right' => true,
-        ],
-
-        // Sidebar items:
-        [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-        [
-            'text' => 'blog',
-            'url' => 'admin/blog',
-            'can' => 'manage-blog',
-        ],
-        [
-            'text' => 'pages',
-            'url' => 'admin/pages',
-            'icon' => 'far fa-fw fa-file',
-            'label' => 4,
-            'label_color' => 'success',
-        ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-        [
-            'text' => 'change_password',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-        ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
+            'text' => 'User Management',
+            'icon' => 'fas fa-users',
+            'can'  => 'user-management',
             'submenu' => [
                 [
-                    'text' => 'level_one',
-                    'url' => '#',
+                    'text' => 'Users',
+                    'url'  => '/users',
+                    'icon' => 'fas fa-user',
                 ],
                 [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
+                    'text' => 'Permissions',
+                    'url'  => '/permissions',
+                    'icon' => 'fas fa-key',
                 ],
             ],
         ],
-        ['header' => 'labels'],
+
+        // Data Import section
         [
-            'text' => 'important',
-            'icon_color' => 'red',
-            'url' => '#',
+            'text' => 'Data Import',
+            'icon' => 'fas fa-upload',
+            'url'  => '/import',
         ],
+
+        // Imported Data section
         [
-            'text' => 'warning',
-            'icon_color' => 'yellow',
-            'url' => '#',
+            'text' => 'Imported Data',
+            'icon' => 'fas fa-database',
+            'submenu' => [
+                [
+                    'text' => 'Orders - DS Sheet',
+                    'url'  => '/imported-data/orders',
+                    'icon' => 'fas fa-file-excel',
+                ],
+            ],
         ],
+
+        // Imports History section
         [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
+            'text' => 'Imports',
+            'icon' => 'fas fa-history',
+            'url'  => '/imports-history',
         ],
     ],
 

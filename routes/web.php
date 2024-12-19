@@ -3,6 +3,11 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\ImportedDataController;
+use App\Http\Controllers\ImportHistoryController;
 
 Auth::routes();
 
@@ -12,7 +17,7 @@ Route::get('/', function () {
 })->name('login');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return view('home');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -26,3 +31,28 @@ require __DIR__.'/auth.php';
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::middleware(['auth'])->group(function () {
+    // Home route
+    Route::get('/home', function () {
+        return view('home');
+    })->name('home');
+
+    // User Management
+    Route::resource('users', UserController::class)->middleware('can:user-management');
+    Route::resource('permissions', PermissionController::class)->middleware('can:user-management');
+
+    // Data Import
+    Route::get('/import', [ImportController::class, 'index'])->name('import.index');
+    Route::post('/import', [ImportController::class, 'store'])->name('import.store');
+
+    // Imported Data
+    Route::get('/imported-data/{type}', [ImportedDataController::class, 'show'])->name('imported-data.show');
+    Route::get('/imported-data/{type}/search', [ImportedDataController::class, 'search'])->name('imported-data.search');
+    Route::get('/imported-data/{type}/export', [ImportedDataController::class, 'export'])->name('imported-data.export');
+
+    // Import History
+    Route::get('/imports-history', [ImportHistoryController::class, 'index'])->name('imports.history');
+    Route::get('/imports-history/search', [ImportHistoryController::class, 'search'])->name('imports.history.search');
+    Route::get('/imports-history/{import}/logs', [ImportHistoryController::class, 'logs'])->name('imports.history.logs');
+});
