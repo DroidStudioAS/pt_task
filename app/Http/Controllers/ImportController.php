@@ -79,6 +79,16 @@ class ImportController extends Controller
 
     public function showImportOrders(Import $import)
     {
+        $fillableFields = (new ImportedData())->getFillable();
+        $filterOptions = [];
+        foreach ($fillableFields as $field) {
+            $filterOptions[$field] = ImportedData::select($field)
+                ->distinct()
+                ->whereNotNull($field)
+                ->pluck($field);
+        }
+
+
         $query = ImportedData::query()
             ->whereHas('import', function($q) {
                 $q->whereNull('deleted_at');
@@ -91,7 +101,9 @@ class ImportController extends Controller
 
         return view('imported-data.orders', [
             'orders' => $orders,
-            'import' => $import
+            'import' => $import,
+            'fillableFields' => $fillableFields,
+            'filterOptions' => $filterOptions
         ]);
     }
 
