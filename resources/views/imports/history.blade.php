@@ -36,7 +36,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Table content will be populated dynamically -->
+                    @foreach($imports as $import)
+                        <tr>
+                            <td>{{ $import->created_at->format('Y-m-d H:i:s') }}</td>
+                            <td>{{ $import->user->name }}</td>
+                            <td>{{ $import->import_type }}</td>
+                            <td>{{ $import->original_filename }}</td>
+                            <td>
+                                <span class="badge badge-{{ $import->status === 'completed' ? 'success' : ($import->status === 'failed' ? 'danger' : 'warning') }}">
+                                    {{ ucfirst($import->status) }}
+                                </span>
+                            </td>
+                            <td>{{ $import->records_processed }}</td>
+                            <td>{{ $import->failed_records }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-info view-logs" data-import-id="{{ $import->id }}">
+                                    <i class="fas fa-eye"></i> View Logs
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>
