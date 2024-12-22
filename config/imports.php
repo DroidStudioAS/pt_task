@@ -18,7 +18,6 @@ return [
                     'Cost' => 'cost',
                     'Shipping Cost' => 'shipping_cost',
                     'Profit' => 'profit',
-                    "asdasdasdas" => "tasdasdasdasddaest"
                 ],
                 'types' => [
                     'order_date' => 'date',
