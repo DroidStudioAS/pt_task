@@ -15,12 +15,15 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
+        // Debugging: Log the request data
+        \Log::info('Request data:', $request->all());
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:permissions',
             'description' => 'required|string'
         ]);
 
-        Permission::create($validated);
+        Permission::create(['name' => $validated['name'], 'description' => $validated['description']]);
 
         return redirect()->route('permissions.index')->with('success', 'Permission created successfully');
     }
