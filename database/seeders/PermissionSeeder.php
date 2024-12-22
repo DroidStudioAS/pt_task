@@ -17,7 +17,9 @@ class PermissionSeeder extends Seeder
             'view_users' => 'Can view users list and details',
             'create_users' => 'Can create new users', 
             'edit_users' => 'Can edit existing users',
-            'delete_users' => 'Can delete users'
+            'delete_users' => 'Can delete users',
+            "import_data" => "Can import data",
+            "delete_imported_data" => "Can delete imported data"
         ];
 
         foreach($permissions as $name => $description) {

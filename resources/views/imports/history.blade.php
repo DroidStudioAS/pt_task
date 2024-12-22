@@ -36,6 +36,7 @@
                                 <a href="{{ route('imports.orders', $import) }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-eye"></i> View Orders
                                 </a>
+                                @if (auth()->user()->hasPermission('delete_imported_data'))
                                 <form action="{{ route('imports.destroy', $import->id) }}" 
                                       method="POST" 
                                       class="d-inline"
@@ -46,6 +47,7 @@
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

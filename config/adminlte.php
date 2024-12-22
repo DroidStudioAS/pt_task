@@ -306,6 +306,7 @@ return [
             'text' => 'Data Import',
             'icon' => 'fas fa-upload',
             'url'  => '/import',
+            'can'  => 'import_data',
         ],
 
         // Imported Data section
