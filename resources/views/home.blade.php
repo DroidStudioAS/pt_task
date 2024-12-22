@@ -2,8 +2,6 @@
 
 @section('title', 'Dashboard')
 
-@dd(auth()->user()->hasPermission('user-management'))
-
 @section('content_header')
     <h1>Dashboard</h1>
 @endsection

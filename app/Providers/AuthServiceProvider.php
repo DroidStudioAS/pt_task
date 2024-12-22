@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -21,10 +23,13 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::define('user-management', function ($user) {
-            \Log::info('Checking user-management permission for user: ' . $user->email);
-            \Log::info('User has permissions: ' . $user->permissions->pluck('name'));
-            return $user->hasPermission('user-management');
+        $this->registerPolicies();
+
+        Gate::define('user-management', function (User $user) {
+            Log::debug("Gate checking user-management for user: {$user->id}");
+            $result = $user->hasPermission('user-management');
+            Log::debug("Gate result: " . ($result ? 'true' : 'false'));
+            return $result;
         });
     }
 } 

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Permission;
+use App\Models\UserPermission;
 
 class User extends Authenticatable
 {
@@ -44,16 +46,27 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function permissions()
+    public function hasPermission(string $permissionName): bool
     {
-        return $this->belongsToMany(Permission::class);
+        \Log::debug("Checking permission: {$permissionName} for user: {$this->id}");
+        
+        $permission = Permission::where('name', $permissionName)->first();
+        
+        if (!$permission) {
+            \Log::debug("Permission not found in database: {$permissionName}");
+            return false;
+        }
+
+        \Log::debug("Found permission ID: {$permission->id}");
+
+        $hasPermission = UserPermission::where('user_id', $this->id)
+            ->where('permission_id', $permission->id)
+            ->exists();
+
+        \Log::debug("User has permission: " . ($hasPermission ? 'true' : 'false'));
+        
+        return $hasPermission;
     }
 
-    public function hasPermission($permission)
-    {
-        return $this->permissions()
-                    ->where('user_id', $this->id)
-                    ->where('name', $permission)
-                    ->exists();
-    }
+
 }

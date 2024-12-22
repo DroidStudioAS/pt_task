@@ -6,6 +6,7 @@ use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use App\Models\UserPermission;
 
 class PermissionSeeder extends Seeder
 {
@@ -20,14 +21,17 @@ class PermissionSeeder extends Seeder
         ];
 
         foreach($permissions as $name => $description) {
-            Permission::create([
+            $permission = Permission::create([
                 'name' => $name,
                 'description' => $description
             ]);
+
+            UserPermission::create([
+                'user_id' => User::where('email', 'admin@example.com')->first()->id,
+                'permission_id' => $permission->id
+            ]);
         }
 
-        // Then attach them to admin
-        $user = User::where('email', 'admin@example.com')->first();
-        $user->permissions()->attach(Permission::all());
+        
     }
 } 
