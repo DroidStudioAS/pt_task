@@ -106,10 +106,21 @@
                                             title="Filter by {{ ucwords(str_replace('_', ' ', $field)) }}">
                                         <option value="">Filter {{ ucwords(str_replace('_', ' ', $field)) }}</option>
                                         @foreach($filterOptions[$field] as $option)
-                                            <option value="{{ $option }}" 
-                                                {{ request("filter_$field") == $option ? 'selected' : '' }}>
-                                                {{ $option }}
-                                            </option>
+                                            @if($field === 'import_id')
+                                                @php
+                                                    $import = \App\Models\Import::find($option);
+                                                    $displayValue = $import ? "Import #{$option} - {$import->file_name}" : $option;
+                                                @endphp
+                                                <option value="{{ $option }}" 
+                                                    {{ request("filter_$field") == $option ? 'selected' : '' }}>
+                                                    {{ $displayValue }}
+                                                </option>
+                                            @else
+                                                <option value="{{ $option }}" 
+                                                    {{ request("filter_$field") == $option ? 'selected' : '' }}>
+                                                    {{ $option }}
+                                                </option>
+                                            @endif
                                         @endforeach
                                     </select>
                                 </div>
