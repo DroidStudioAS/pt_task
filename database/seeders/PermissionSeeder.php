@@ -11,16 +11,23 @@ class PermissionSeeder extends Seeder
 {
     public function run()
     {
-        // Create user-management permission
-        $permission = Permission::create([
-            'name' => 'user-management',
-            'description' => 'Can manage users and their permissions'
-        ]);
+        $permissions = [
+            'user-management' => 'Can access user management section',
+            'view_users' => 'Can view users list and details',
+            'create_users' => 'Can create new users', 
+            'edit_users' => 'Can edit existing users',
+            'delete_users' => 'Can delete users'
+        ];
 
-        // Get admin user
+        foreach($permissions as $name => $description) {
+            Permission::create([
+                'name' => $name,
+                'description' => $description
+            ]);
+        }
+
+        // Then attach them to admin
         $user = User::where('email', 'admin@example.com')->first();
-        
-        // Attach permission to admin
-        $user->permissions()->attach($permission);
+        $user->permissions()->attach(Permission::all());
     }
 } 

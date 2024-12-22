@@ -22,6 +22,8 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('user-management', function ($user) {
+            \Log::info('Checking user-management permission for user: ' . $user->email);
+            \Log::info('User has permissions: ' . $user->permissions->pluck('name'));
             return $user->hasPermission('user-management');
         });
     }
