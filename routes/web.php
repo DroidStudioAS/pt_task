@@ -54,9 +54,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/import', [ImportController::class, 'store'])->name('import.store');
 
     // Imported Data
-    Route::get('/imported-data/{type}', [ImportedDataController::class, 'show'])->name('imported-data.show');
-    Route::get('/imported-data/{type}/search', [ImportedDataController::class, 'search'])->name('imported-data.search');
-    Route::get('/imported-data/{type}/export', [ImportedDataController::class, 'export'])->name('imported-data.export');
+    Route::get('/imported-data/orders', [ImportedDataController::class, 'orders'])->name('imported-data.orders');
+    Route::get('/imported-data/export', [ImportedDataController::class, 'export'])->name('imported-data.export');
 
     // Import History
     Route::get('/imports-history', [ImportHistoryController::class, 'index'])->name('imports.history');

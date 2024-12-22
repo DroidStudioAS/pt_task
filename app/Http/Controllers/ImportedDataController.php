@@ -4,70 +4,69 @@ namespace App\Http\Controllers;
 
 use App\Models\ImportedData;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 
 class ImportedDataController extends Controller
 {
-    public function show($type)
+    public function orders(Request $request)
     {
-        $data = ImportedData::where('import_type', $type)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = ImportedData::query();
 
-        return view('imported-data.' . $type, compact('data'));
+        // Handle search if provided
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('sku', 'like', "%{$search}%")
+                  ->orWhere('item_description', 'like', "%{$search}%")
+                  ->orWhere('so_number', 'like', "%{$search}%")
+                  ->orWhere('channel', 'like', "%{$search}%");
+            });
+        }
+
+        $orders = $query->orderBy('order_date', 'desc')
+                       ->paginate(10)
+                       ->withQueryString();
+
+        return view('imported-data.orders', compact('orders'));
     }
 
-    public function search(Request $request, $type)
+    public function export()
     {
-        $query = $request->get('query');
+        $orders = ImportedData::all();
         
-        $data = ImportedData::where('import_type', $type)
-            ->where(function($q) use ($query) {
-                $q->where('order_date', 'like', "%{$query}%")
-                  ->orWhere('channel', 'like', "%{$query}%")
-                  ->orWhere('sku', 'like', "%{$query}%")
-                  ->orWhere('item_description', 'like', "%{$query}%");
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        // Generate CSV file
+        $filename = "orders-export-" . date('Y-m-d') . ".csv";
+        $headers = array(
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        );
 
-        return response()->json($data);
-    }
+        $columns = ['Order Date', 'Channel', 'SKU', 'Item Description', 'Origin', 'SO#', 
+                   'Total Price', 'Cost', 'Shipping Cost', 'Profit'];
 
-    public function export($type)
-    {
-        $data = ImportedData::where('import_type', $type)->get();
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $type . '_export.csv"',
-        ];
-
-        $callback = function() use ($data) {
+        $callback = function() use ($orders, $columns) {
             $file = fopen('php://output', 'w');
-            
-            // Add headers
-            fputcsv($file, ['Order Date', 'Channel', 'SKU', 'Item Description', 'Origin', 'SO#', 'Total Price', 'Cost', 'Shipping Cost', 'Profit']);
-            
-            // Add data rows
-            foreach ($data as $row) {
+            fputcsv($file, $columns);
+
+            foreach ($orders as $order) {
                 fputcsv($file, [
-                    $row->order_date,
-                    $row->channel,
-                    $row->sku,
-                    $row->item_description,
-                    $row->origin,
-                    $row->so_number,
-                    $row->total_price,
-                    $row->cost,
-                    $row->shipping_cost,
-                    $row->profit
+                    $order->order_date->format('Y-m-d'),
+                    $order->channel,
+                    $order->sku,
+                    $order->item_description,
+                    $order->origin,
+                    $order->so_number,
+                    $order->total_price,
+                    $order->cost,
+                    $order->shipping_cost,
+                    $order->profit
                 ]);
             }
-            
             fclose($file);
         };
 
-        return Response::stream($callback, 200, $headers);
+        return response()->stream($callback, 200, $headers);
     }
 } 

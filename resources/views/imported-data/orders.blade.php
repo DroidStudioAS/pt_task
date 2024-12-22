@@ -11,18 +11,21 @@
         <div class="card-header">
             <h3 class="card-title">Orders List</h3>
             <div class="card-tools">
-                <div class="input-group input-group-sm" style="width: 250px;">
-                    <input type="text" name="table_search" class="form-control float-right" placeholder="Search">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-default">
-                            <i class="fas fa-search"></i>
-                        </button>
+                <form action="{{ route('imported-data.orders') }}" method="GET" class="d-inline">
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <input type="text" name="search" class="form-control float-right" 
+                               placeholder="Search" value="{{ request('search') }}">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-default">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </form>
                 <div class="ml-2 d-inline">
-                    <button class="btn btn-sm btn-success" id="exportBtn">
+                    <a href="{{ route('imported-data.export') }}" class="btn btn-sm btn-success">
                         <i class="fas fa-download"></i> Export
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -44,32 +47,38 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Table content will be populated dynamically -->
+                    @forelse($orders as $order)
+                        <tr>
+                            <td>{{ $order->order_date->format('Y-m-d') }}</td>
+                            <td>{{ $order->channel }}</td>
+                            <td>{{ $order->sku }}</td>
+                            <td>{{ $order->item_description }}</td>
+                            <td>{{ $order->origin }}</td>
+                            <td>{{ $order->so_number }}</td>
+                            <td>${{ number_format($order->total_price, 2) }}</td>
+                            <td>${{ number_format($order->cost, 2) }}</td>
+                            <td>${{ number_format($order->shipping_cost, 2) }}</td>
+                            <td>${{ number_format($order->profit, 2) }}</td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="11" class="text-center">No orders found</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
         <div class="card-footer clearfix">
-            <!-- Pagination will be added here -->
+            {{ $orders->appends(request()->query())->links() }}
         </div>
     </div>
 @stop
 
 @section('css')
     <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
-
-@section('js')
-    <script>
-        $(document).ready(function() {
-            // Search functionality
-            $('input[name="table_search"]').on('keyup', function() {
-                // Implement search functionality
-            });
-
-            // Export functionality
-            $('#exportBtn').click(function() {
-                // Implement export functionality
-            });
-        });
-    </script>
 @stop 
