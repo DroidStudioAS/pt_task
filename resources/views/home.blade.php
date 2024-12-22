@@ -7,5 +7,9 @@
 @endsection
 
 @section('content')
+    @if ($errors->any())
+        {{ dd('kurac') }}
+    @endif
     <p>Welcome to this beautiful admin panel.</p>
+
 @endsection

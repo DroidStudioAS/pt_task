@@ -17,19 +17,24 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
-        $validated = $request->validated();
+        try {
+            $validated = $request->validated();
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+            if (isset($validated['permissions'])) {
+                $user->permissions()->sync($validated['permissions']);
+            }
 
-        if (isset($validated['permissions'])) {
-            $user->permissions()->sync($validated['permissions']);
+            return redirect()->route('users.index')->with('success', 'User created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => $e->getMessage()]);
         }
-
-        return redirect()->route('users.index')->with('success', 'User created successfully');
     }
 
     public function update(UpdateUserRequest $request, User $user)

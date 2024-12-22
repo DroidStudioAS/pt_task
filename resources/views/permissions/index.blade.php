@@ -7,6 +7,7 @@
 @stop
 
 @section('content')
+@include('partials.notification')
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Permissions List</h3>
