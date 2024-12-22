@@ -34,7 +34,7 @@
 
                 <div class="required-headers mt-4">
                     <h5>Required Headers:</h5>
-                    <p class="text-muted">Order Date, Channel, SKU, Item Description, Origin, SO#, Total Price, Cost, Shipping Cost, Profit</p>
+                    <p class="text-muted">{{ implode(', ', $requiredHeaders) }}</p>
                 </div>
 
                 <button type="submit" class="btn btn-primary mt-3">Import</button>

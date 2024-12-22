@@ -25,7 +25,10 @@ class ImportController extends Controller
             return auth()->user()->hasPermission($type['permission_required'] ?? '');
         });
 
-        return view('import.index', compact('importTypes'));
+        // Get headers directly from the config for orders without filtering
+        $requiredHeaders = array_keys(config('imports.orders.files.orders.headers_to_db'));
+
+        return view('import.index', compact('importTypes', 'requiredHeaders'));
     }
 
     public function store(Request $request)
