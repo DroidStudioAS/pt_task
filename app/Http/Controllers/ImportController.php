@@ -40,7 +40,7 @@ class ImportController extends Controller
             return back()->with('error', 'Invalid import type.');
         }
 
-        if (!auth()->user()->hasPermission($importConfig['permission_required'])) {
+        if (!auth()->user()->hasPermission("import_data")) {
             return back()->with('error', 'You do not have permission to perform this import.');
         }
 
