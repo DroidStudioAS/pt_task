@@ -16,24 +16,125 @@
         <div class="card-header">
             <h3 class="card-title">Orders List</h3>
             <div class="card-tools">
-                <form action="{{ route('imported-data.orders') }}" method="GET" class="d-inline">
-                    <div class="input-group input-group-sm" style="width: 250px;">
-                        <input type="text" name="search" class="form-control float-right" 
-                               placeholder="Search" value="{{ request('search') }}">
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-default">
-                                <i class="fas fa-search"></i>
-                            </button>
+                <button type="button" class="btn btn-tool" data-toggle="collapse" data-target="#searchDrawer" 
+                        title="Toggle Search Filters">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Drawer -->
+        <div class="collapse" id="searchDrawer">
+            <div class="card-body border-bottom">
+                <form action="{{ route('imported-data.orders') }}" method="GET">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <!-- Global Search -->
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" name="search" class="form-control" 
+                                           placeholder="Global Search" value="{{ request('search') }}"
+                                           data-toggle="tooltip" 
+                                           title="Search across all fields">
+                                </div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="form-group">
+                                <label>Date Range</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-calendar"></i>
+                                        </span>
+                                    </div>
+                                    <input type="date" name="date_from" class="form-control" 
+                                           value="{{ request('date_from') }}"
+                                           data-toggle="tooltip" 
+                                           title="Filter by start date">
+                                    <div class="input-group-append input-group-prepend">
+                                        <span class="input-group-text">to</span>
+                                    </div>
+                                    <input type="date" name="date_to" class="form-control" 
+                                           value="{{ request('date_to') }}"
+                                           data-toggle="tooltip" 
+                                           title="Filter by end date">
+                                </div>
+                            </div>
+
+                            <!-- Sort Options -->
+                            <div class="form-group">
+                                <label>Sort Options</label>
+                                <div class="input-group">
+                                    <select name="sort_by" class="form-control"
+                                            data-toggle="tooltip" 
+                                            title="Choose field to sort by">
+                                        @foreach($fillableFields as $field)
+                                            <option value="{{ $field }}" 
+                                                {{ request('sort_by') == $field ? 'selected' : '' }}>
+                                                Sort by {{ ucwords(str_replace('_', ' ', $field)) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <select name="sort_direction" class="form-control"
+                                            data-toggle="tooltip" 
+                                            title="Choose sort direction">
+                                        <option value="asc" {{ request('sort_direction') == 'asc' ? 'selected' : '' }}>
+                                            Ascending
+                                        </option>
+                                        <option value="desc" {{ request('sort_direction') == 'desc' ? 'selected' : '' }}>
+                                            Descending
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column - Field Filters -->
+                        <div class="col-md-6">
+                            <label>Field Filters</label>
+                            @foreach($fillableFields as $field)
+                                <div class="form-group">
+                                    <select name="filter_{{ $field }}" class="form-control"
+                                            data-toggle="tooltip" 
+                                            title="Filter by {{ ucwords(str_replace('_', ' ', $field)) }}">
+                                        <option value="">Filter {{ ucwords(str_replace('_', ' ', $field)) }}</option>
+                                        @foreach($filterOptions[$field] as $option)
+                                            <option value="{{ $option }}" 
+                                                {{ request("filter_$field") == $option ? 'selected' : '' }}>
+                                                {{ $option }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="float-right">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Apply Filters
+                                </button>
+                                <a href="{{ route('imported-data.orders') }}" class="btn btn-default">
+                                    <i class="fas fa-undo"></i> Reset
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </form>
-                <div class="ml-2 d-inline">
-                    <a href="{{ route('imported-data.export') }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-download"></i> Export
-                    </a>
-                </div>
             </div>
         </div>
+
+        <!-- Table Content -->
         <div class="card-body table-responsive p-0">
             <table class="table table-hover text-nowrap">
                 <thead>
@@ -86,4 +187,32 @@
 
 @section('css')
     <link rel="stylesheet" href="/css/admin_custom.css">
+@stop
+
+@section('js')
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // Initialize select2 with bootstrap4 theme
+        $('select').select2({
+            theme: 'bootstrap4'
+        });
+
+        // Keep drawer open if there are active filters
+        if ({{ json_encode(
+            request()->hasAny(['search', 'date_from', 'date_to', 'sort_by', 'sort_direction']) || 
+            collect(request()->all())->keys()->contains(fn($key) => str_starts_with($key, 'filter_'))
+        ) }}) {
+            $('#searchDrawer').addClass('show');
+        }
+
+        // Persist select2 search terms
+        $('.select2-search__field').each(function() {
+            $(this).attr('data-toggle', 'tooltip')
+                   .attr('title', 'Type to search options');
+        });
+    });
+</script>
 @stop 

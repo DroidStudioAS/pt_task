@@ -8,6 +8,20 @@ class ImportedData extends Model
 {
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'order_date',
+        'channel',
+        'sku',
+        'item_description',
+        'origin',
+        'so_number',
+        'total_price',
+        'cost',
+        'shipping_cost',
+        'profit',
+        'import_id'
+    ];
+
     public function import()
     {
         return $this->belongsTo(Import::class);

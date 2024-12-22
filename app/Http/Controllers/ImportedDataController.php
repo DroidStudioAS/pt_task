@@ -11,22 +11,51 @@ class ImportedDataController extends Controller
     {
         $query = ImportedData::query();
 
-        // Handle search if provided
-        if ($request->has('search')) {
+        // Get all fillable fields for filtering
+        $fillableFields = (new ImportedData())->getFillable();
+        
+        // Handle search across all fillable fields
+        if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('sku', 'like', "%{$search}%")
-                  ->orWhere('item_description', 'like', "%{$search}%")
-                  ->orWhere('so_number', 'like', "%{$search}%")
-                  ->orWhere('channel', 'like', "%{$search}%");
+            $query->where(function($q) use ($search, $fillableFields) {
+                foreach ($fillableFields as $field) {
+                    $q->orWhere($field, 'like', "%{$search}%");
+                }
             });
         }
 
-        $orders = $query->orderBy('order_date', 'desc')
-                       ->paginate(10)
-                       ->withQueryString();
+        // Handle individual field filters
+        foreach ($fillableFields as $field) {
+            if ($request->has("filter_$field") && $request->{"filter_$field"}) {
+                $query->where($field, 'like', "%{$request->{"filter_$field"}}%");
+            }
+        }
 
-        return view('imported-data.orders', compact('orders'));
+        // Handle date range filters if they exist
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('order_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('order_date', '<=', $request->date_to);
+        }
+
+        // Handle sorting
+        $sortField = $request->get('sort_by', 'order_date');
+        $sortDirection = $request->get('sort_direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $orders = $query->paginate(10)->withQueryString();
+
+        // Get unique values for dropdown filters
+        $filterOptions = [];
+        foreach ($fillableFields as $field) {
+            $filterOptions[$field] = ImportedData::select($field)
+                ->distinct()
+                ->whereNotNull($field)
+                ->pluck($field);
+        }
+
+        return view('imported-data.orders', compact('orders', 'fillableFields', 'filterOptions'));
     }
 
     public function export()
