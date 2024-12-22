@@ -46,26 +46,17 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    /**
+     * Get all permissions for the user
+     */
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions');
+    }
+
     public function hasPermission(string $permissionName): bool
     {
-        \Log::debug("Checking permission: {$permissionName} for user: {$this->id}");
-        
-        $permission = Permission::where('name', $permissionName)->first();
-        
-        if (!$permission) {
-            \Log::debug("Permission not found in database: {$permissionName}");
-            return false;
-        }
-
-        \Log::debug("Found permission ID: {$permission->id}");
-
-        $hasPermission = UserPermission::where('user_id', $this->id)
-            ->where('permission_id', $permission->id)
-            ->exists();
-
-        \Log::debug("User has permission: " . ($hasPermission ? 'true' : 'false'));
-        
-        return $hasPermission;
+        return $this->permissions()->where('name', $permissionName)->exists();
     }
 
 
