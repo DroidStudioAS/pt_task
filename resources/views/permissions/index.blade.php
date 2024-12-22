@@ -34,8 +34,12 @@
                             <td>{{ $permission->name }}</td>
                             <td>{{ $permission->description }}</td>
                             <td>
-                                <button class="btn btn-primary edit-btn" data-id="{{ $permission->id }}" data-name="{{ $permission->name }}" data-description="{{ $permission->description }}" data-toggle="modal" data-target="#editPermissionModal">Edit</button>
-                                <button class="btn btn-danger delete-btn" data-id="{{ $permission->id }}" data-toggle="modal" data-target="#deletePermissionModal">Delete</button>
+                                @if (!$permission->is_immutable)
+                                    <button class="btn btn-primary edit-btn" data-id="{{ $permission->id }}" data-name="{{ $permission->name }}" data-description="{{ $permission->description }}" data-toggle="modal" data-target="#editPermissionModal">Edit</button>
+                                    <button class="btn btn-danger delete-btn" data-id="{{ $permission->id }}" data-toggle="modal" data-target="#deletePermissionModal">Delete</button>
+                                @else
+                                    <span class="text-muted">Immutable</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -66,6 +70,7 @@
                             <label for="permissionDescription">Description</label>
                             <textarea class="form-control" id="permissionDescription" placeholder="Enter description" name="description"></textarea>
                         </div>
+                        <input type="hidden" name="is_immutable" value="0">
                         <button type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>

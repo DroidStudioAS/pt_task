@@ -23,7 +23,8 @@ class StorePermissionRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255|unique:permissions',
-            'description' => 'required|string'
+            'description' => 'required|string', 
+            'is_immutable' => 'required|boolean'
         ];
     }
 
