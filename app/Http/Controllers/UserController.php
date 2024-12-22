@@ -50,9 +50,7 @@ class UserController extends Controller
             $user->update(['password' => Hash::make($validated['password'])]);
         }
 
-        if (isset($validated['permissions'])) {
-            $user->permissions()->sync($validated['permissions']);
-        }
+        $user->permissions()->sync($validated['permissions'] ?? []);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully');
     }
