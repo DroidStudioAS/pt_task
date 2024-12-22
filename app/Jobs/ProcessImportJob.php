@@ -144,6 +144,63 @@ class ProcessImportJob implements ShouldQueue
         }
     }
 
-    // ... rest of the methods for processing CSV and Excel files remain similar
-    // but should use processRecord() method instead of direct creation
+    protected function processCsvFile(&$logs)
+    {
+        $csv = Reader::createFromPath(Storage::path($this->import->file_path), 'r');
+        $csv->setHeaderOffset(0);
+
+        // Get the headers from the CSV file
+        $fileHeaders = $csv->getHeader();
+        
+        // Get required headers from config
+        $requiredHeaders = array_keys($this->importConfig['files']['orders']['headers_to_db']);
+
+        // Check for missing headers
+        $missingHeaders = array_diff($requiredHeaders, $fileHeaders);
+        
+        if (!empty($missingHeaders)) {
+            throw new \Exception("Missing required headers: " . implode(', ', $missingHeaders));
+        }
+
+        // Process records
+        foreach ($csv->getRecords() as $record) {
+            $this->processRecord($record, $logs);
+        }
+    }
+
+    protected function processExcelFile(&$logs)
+    {
+        $reader = ReaderEntityFactory::createXLSXReader();
+        $reader->open(Storage::path($this->import->file_path));
+
+        foreach ($reader->getSheetIterator() as $sheet) {
+            $isFirstRow = true;
+            $headers = [];
+            
+            foreach ($sheet->getRowIterator() as $row) {
+                if ($isFirstRow) {
+                    $headers = $row->toArray();
+                    
+                    // Get required headers from config
+                    $requiredHeaders = array_keys($this->importConfig['files']['orders']['headers_to_db']);
+
+                    // Check for missing headers
+                    $missingHeaders = array_diff($requiredHeaders, $headers);
+                    
+                    if (!empty($missingHeaders)) {
+                        throw new \Exception("Missing required headers: " . implode(', ', $missingHeaders));
+                    }
+
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                $record = array_combine($headers, $row->toArray());
+                $this->processRecord($record, $logs);
+            }
+            break; // Only process first sheet
+        }
+
+        $reader->close();
+    }
 } 
