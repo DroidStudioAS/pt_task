@@ -54,7 +54,7 @@
                 <tbody>
                     @forelse($orders as $order)
                         <tr>
-                            <td>{{ $order->order_date->format('Y-m-d') }}</td>
+                            <td>{{ $order->order_date }}</td>
                             <td>{{ $order->channel }}</td>
                             <td>{{ $order->sku }}</td>
                             <td>{{ $order->item_description }}</td>

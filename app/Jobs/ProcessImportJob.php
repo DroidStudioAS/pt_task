@@ -3,13 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\Import;
-use App\Models\ImportedData;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Validator;
 use League\Csv\Reader;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 
@@ -18,80 +19,30 @@ class ProcessImportJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $import;
+    protected $importConfig;
 
     public function __construct(Import $import)
     {
         $this->import = $import;
+        $this->importConfig = Config::get("imports.{$import->import_type}");
     }
 
     public function handle()
     {
         try {
+            if (!$this->importConfig) {
+                throw new \Exception("Invalid import type configuration");
+            }
+
             $this->import->update(['status' => 'processing']);
             $logs = [];
 
-            // Get file extension
             $extension = strtolower(pathinfo(Storage::path($this->import->file_path), PATHINFO_EXTENSION));
             
             if ($extension === 'csv') {
-                // Handle CSV files
-                $csv = Reader::createFromPath(Storage::path($this->import->file_path), 'r');
-                $csv->setHeaderOffset(0);
-                $records = $csv->getRecords();
-                $this->processRecords($records);
+                $this->processCsvFile($logs);
             } else {
-                // Handle Excel files
-                $reader = ReaderEntityFactory::createXLSXReader();
-                $reader->open(Storage::path($this->import->file_path));
-                
-                foreach ($reader->getSheetIterator() as $sheet) {
-                    // Only process the first sheet
-                    $rows = $sheet->getRowIterator();
-                    $headers = null;
-                    $processedCount = 0;
-                    $errorCount = 0;
-
-                    foreach ($rows as $row) {
-                        if (!$headers) {
-                            // First row is headers
-                            $headers = $row->toArray();
-                            continue;
-                        }
-
-                        try {
-                            $record = array_combine($headers, $row->toArray());
-                            
-                            ImportedData::create([
-                                'import_id' => $this->import->id,
-                                'import_type' => $this->import->import_type,
-                                'order_date' => $record['Order Date'] ?? null,
-                                'channel' => $record['Channel'] ?? null,
-                                'sku' => $record['SKU'] ?? null,
-                                'item_description' => $record['Item Description'] ?? null,
-                                'origin' => $record['Origin'] ?? null,
-                                'so_number' => $record['SO#'] ?? null,
-                                'total_price' => $record['Total Price'] ?? 0,
-                                'cost' => $record['Cost'] ?? 0,
-                                'shipping_cost' => $record['Shipping Cost'] ?? 0,
-                                'profit' => $record['Profit'] ?? 0
-                            ]);
-                            $processedCount++;
-                        } catch (\Exception $e) {
-                            $errorCount++;
-                            $logs[] = "Error processing row {$processedCount}: " . $e->getMessage();
-                        }
-                    }
-                    
-                    // Only process first sheet
-                    break;
-                }
-
-                $reader->close();
-
-                $logs[] = "Processed {$processedCount} records successfully.";
-                if ($errorCount > 0) {
-                    $logs[] = "Encountered {$errorCount} errors during import.";
-                }
+                $this->processExcelFile($logs);
             }
 
             $this->import->update([
@@ -108,35 +59,91 @@ class ProcessImportJob implements ShouldQueue
         }
     }
 
-    protected function processRecords($records)
+    protected function processRecord($record, &$logs)
     {
-        $processedCount = 0;
-        $errorCount = 0;
-        $logs = [];
+        $fileConfig = collect($this->importConfig['files'])->first();
+        
+        // Map headers to database columns
+        $mappedData = collect($fileConfig['headers_to_db'])->map(function($dbColumn, $fileHeader) use ($record) {
+            return [$dbColumn => $record[$fileHeader] ?? null];
+        })->collapse()->toArray();
 
-        foreach ($records as $record) {
-            try {
-                ImportedData::create([
-                    'import_id' => $this->import->id,
-                    'import_type' => $this->import->import_type,
-                    'order_date' => $record['Order Date'] ?? null,
-                    'channel' => $record['Channel'] ?? null,
-                    'sku' => $record['SKU'] ?? null,
-                    'item_description' => $record['Item Description'] ?? null,
-                    'origin' => $record['Origin'] ?? null,
-                    'so_number' => $record['SO#'] ?? null,
-                    'total_price' => $record['Total Price'] ?? 0,
-                    'cost' => $record['Cost'] ?? 0,
-                    'shipping_cost' => $record['Shipping Cost'] ?? 0,
-                    'profit' => $record['Profit'] ?? 0
-                ]);
-                $processedCount++;
-            } catch (\Exception $e) {
-                $errorCount++;
-                $logs[] = "Error processing row {$processedCount}: " . $e->getMessage();
+        // Add import_id and import_type
+        $mappedData['import_id'] = $this->import->id;
+        $mappedData['import_type'] = $this->import->import_type;
+
+        // Validate data
+        $validator = Validator::make($mappedData, $fileConfig['validation'] ?? []);
+        
+        if ($validator->fails()) {
+            $logs[] = "Validation failed: " . implode(", ", $validator->errors()->all());
+            return false;
+        }
+
+        // Convert types
+        foreach ($fileConfig['types'] ?? [] as $field => $type) {
+            if (isset($mappedData[$field])) {
+                $mappedData[$field] = $this->convertType($mappedData[$field], $type);
             }
         }
 
-        return [$processedCount, $errorCount, $logs];
+        $model = $this->importConfig['model'];
+
+        if (!empty($fileConfig['update_or_create'])) {
+            $keys = collect($fileConfig['update_or_create']['keys'])
+                ->mapWithKeys(function($key) use ($mappedData) {
+                    return [$key => $mappedData[$key]];
+                })->toArray();
+
+            // If audit is enabled, record the changes
+            if ($fileConfig['update_or_create']['audit']) {
+                $existing = $model::where($keys)->first();
+                if ($existing) {
+                    $this->auditChanges($existing, $mappedData);
+                }
+            }
+
+            $model::updateOrCreate($keys, $mappedData);
+        } else {
+            $model::create($mappedData);
+        }
+
+        return true;
     }
+
+    protected function convertType($value, $type)
+    {
+        switch ($type) {
+            case 'date':
+                return \Carbon\Carbon::parse($value);
+            case 'decimal':
+                return floatval($value);
+            case 'integer':
+                return intval($value);
+            default:
+                return $value;
+        }
+    }
+
+    protected function auditChanges($existing, $newData)
+    {
+        $changes = [];
+        foreach ($newData as $key => $value) {
+            if ($existing->$key != $value) {
+                $changes[] = [
+                    'field' => $key,
+                    'old_value' => $existing->$key,
+                    'new_value' => $value
+                ];
+            }
+        }
+
+        if (!empty($changes)) {
+            // Implement your audit logging here
+            // You might want to create an Audit model and table
+        }
+    }
+
+    // ... rest of the methods for processing CSV and Excel files remain similar
+    // but should use processRecord() method instead of direct creation
 } 

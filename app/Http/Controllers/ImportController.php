@@ -7,12 +7,25 @@ use App\Models\ImportedData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessImportJob;
+use Illuminate\Support\Facades\Config;
 
 class ImportController extends Controller
 {
     public function index()
     {
-        return view('import.index');
+        $importTypes = collect(Config::get('imports'))->map(function($config, $key) {
+            return [
+                'key' => $key,
+                'name' => $config['name'],
+                'headers' => collect($config['files'])->map(function($file) {
+                    return array_keys($file['headers_to_db']);
+                })->first()
+            ];
+        })->filter(function($type) {
+            return auth()->user()->hasPermission($type['permission_required'] ?? '');
+        });
+
+        return view('import.index', compact('importTypes'));
     }
 
     public function store(Request $request)
@@ -21,6 +34,16 @@ class ImportController extends Controller
             'import_type' => 'required|string',
             'file' => 'required|file|mimes:xlsx,xls,csv'
         ]);
+
+        $importConfig = Config::get("imports.{$validated['import_type']}");
+        
+        if (!$importConfig) {
+            return back()->with('error', 'Invalid import type.');
+        }
+
+        if (!auth()->user()->hasPermission($importConfig['permission_required'])) {
+            return back()->with('error', 'You do not have permission to perform this import.');
+        }
 
         // Store the file
         $path = $request->file('file')->store('imports');
@@ -34,7 +57,6 @@ class ImportController extends Controller
             'status' => 'pending'
         ]);
 
-        // Dispatch job to process the import
         ProcessImportJob::dispatch($import);
 
         return redirect()->route('imports.history')
