@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Import;
+use App\Models\ImportedData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessImportJob;
@@ -38,5 +39,28 @@ class ImportController extends Controller
 
         return redirect()->route('imports.history')
             ->with('success', 'File uploaded successfully. Import is being processed.');
+    }
+
+    public function viewLogs(Import $import)
+    {
+        return response()->json([
+            'success' => true,
+            'logs' => $import->logs,
+            'filename' => $import->file_name
+        ]);
+    }
+
+    public function showImportOrders(Import $import)
+    {
+        $query = ImportedData::query()->where('import_id', $import->id);
+
+        $orders = $query->orderBy('order_date', 'desc')
+                       ->paginate(10)
+                       ->withQueryString();
+
+        return view('imported-data.orders', [
+            'orders' => $orders,
+            'import' => $import
+        ]);
     }
 } 

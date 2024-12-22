@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ImportedData extends Model
 {
     protected $fillable = [
+        'import_id',
         'import_type',
         'order_date',
         'channel',
@@ -27,4 +28,9 @@ class ImportedData extends Model
         'shipping_cost' => 'decimal:2',
         'profit' => 'decimal:2'
     ];
+
+    public function import()
+    {
+        return $this->belongsTo(Import::class);
+    }
 } 

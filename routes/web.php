@@ -61,4 +61,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/imports-history', [ImportHistoryController::class, 'index'])->name('imports.history');
     Route::get('/imports-history/search', [ImportHistoryController::class, 'search'])->name('imports.history.search');
     Route::get('/imports-history/{import}/logs', [ImportHistoryController::class, 'logs'])->name('imports.history.logs');
+
+    // Import Logs
+    Route::get('/imports/{import}/logs', [ImportController::class, 'viewLogs'])->name('imports.logs');
+    Route::get('/imports/{import}/orders', [ImportController::class, 'showImportOrders'])->name('imports.orders');
 });

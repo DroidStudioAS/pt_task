@@ -12,17 +12,16 @@ class Import extends Model
         'file_name',
         'file_path',
         'status',
-        'records_processed',
-        'failed_records',
         'logs'
     ];
 
-    protected $casts = [
-        'logs' => 'array'
-    ];
+    public function importedData()
+    {
+        return $this->hasMany(ImportedData::class);
+    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-} 
+}

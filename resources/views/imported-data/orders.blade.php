@@ -3,7 +3,12 @@
 @section('title', 'Imported Orders')
 
 @section('content_header')
-    <h1>Imported Orders</h1>
+    <h1>
+        Imported Orders
+        @if(isset($import))
+            <small>From import: {{ $import->file_name }}</small>
+        @endif
+    </h1>
 @stop
 
 @section('content')

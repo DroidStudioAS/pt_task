@@ -11,7 +11,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use League\Csv\Reader;
-use League\Csv\Statement;
 
 class ProcessImportJob implements ShouldQueue
 {
@@ -30,66 +29,53 @@ class ProcessImportJob implements ShouldQueue
             $this->import->update(['status' => 'processing']);
             $logs = [];
 
-            // Read the CSV file
+            // Read CSV file
             $csv = Reader::createFromPath(Storage::path($this->import->file_path), 'r');
             $csv->setHeaderOffset(0);
 
-            // Get headers and validate them
-            $headers = $csv->getHeader();
-            $requiredHeaders = [
-                'Order Date', 'Channel', 'SKU', 'Item Description', 'Origin', 
-                'SO#', 'Total Price', 'Cost', 'Shipping Cost', 'Profit'
-            ];
-
-            $missingHeaders = array_diff($requiredHeaders, $headers);
-            if (!empty($missingHeaders)) {
-                throw new \Exception('Missing required headers: ' . implode(', ', $missingHeaders));
-            }
-
-            // Process records
-            $records = Statement::create()->process($csv);
+            $records = $csv->getRecords();
             $processedCount = 0;
-            $failedCount = 0;
+            $errorCount = 0;
 
             foreach ($records as $record) {
                 try {
                     ImportedData::create([
+                        'import_id' => $this->import->id,
                         'import_type' => $this->import->import_type,
-                        'order_date' => $record['Order Date'],
-                        'channel' => $record['Channel'],
-                        'sku' => $record['SKU'],
-                        'item_description' => $record['Item Description'],
-                        'origin' => $record['Origin'],
-                        'so_number' => $record['SO#'],
-                        'total_price' => $record['Total Price'],
-                        'cost' => $record['Cost'],
-                        'shipping_cost' => $record['Shipping Cost'],
-                        'profit' => $record['Profit']
+                        'order_date' => $record['Order Date'] ?? null,
+                        'channel' => $record['Channel'] ?? null,
+                        'sku' => $record['SKU'] ?? null,
+                        'item_description' => $record['Item Description'] ?? null,
+                        'origin' => $record['Origin'] ?? null,
+                        'so_number' => $record['SO#'] ?? null,
+                        'total_price' => $record['Total Price'] ?? 0,
+                        'cost' => $record['Cost'] ?? 0,
+                        'shipping_cost' => $record['Shipping Cost'] ?? 0,
+                        'profit' => $record['Profit'] ?? 0
                     ]);
                     $processedCount++;
                 } catch (\Exception $e) {
-                    $failedCount++;
-                    $logs[] = [
-                        'row' => $processedCount + $failedCount,
-                        'error' => $e->getMessage(),
-                        'data' => $record
-                    ];
+                    $errorCount++;
+                    $logs[] = "Error processing row {$processedCount}: " . $e->getMessage();
                 }
             }
 
-            // Update import status
+            $logs[] = "Processed {$processedCount} records successfully.";
+            if ($errorCount > 0) {
+                $logs[] = "Encountered {$errorCount} errors during import.";
+            }
+
             $this->import->update([
                 'status' => 'completed',
-                'records_processed' => $processedCount,
-                'failed_records' => $failedCount,
-                'logs' => $logs
+                'logs' => implode("\n", $logs)
             ]);
 
         } catch (\Exception $e) {
             $this->import->update([
                 'status' => 'failed',
-                'logs' => [['error' => $e->getMessage()]]
+                'logs' => "Import failed: " . $e->getMessage()
             ]);
+            throw $e;
         }
     }
 } 
