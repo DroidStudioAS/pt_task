@@ -36,6 +36,16 @@
                                 <a href="{{ route('imports.orders', $import) }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-eye"></i> View Orders
                                 </a>
+                                <form action="{{ route('imports.destroy', $import->id) }}" 
+                                      method="POST" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to delete this import?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach

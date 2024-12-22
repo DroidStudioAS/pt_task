@@ -65,4 +65,7 @@ Route::middleware(['auth'])->group(function () {
     // Import Logs
     Route::get('/imports/{import}/logs', [ImportController::class, 'viewLogs'])->name('imports.logs');
     Route::get('/imports/{import}/orders', [ImportController::class, 'showImportOrders'])->name('imports.orders');
+
+    // Import Delete
+    Route::delete('/imports/{import}', [ImportController::class, 'destroy'])->name('imports.destroy');
 });

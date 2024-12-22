@@ -9,7 +9,7 @@ class ImportHistoryController extends Controller
 {
     public function index()
     {
-        $imports = Import::with('user')
+        $imports = Import::whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 

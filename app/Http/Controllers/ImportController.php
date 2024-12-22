@@ -74,7 +74,11 @@ class ImportController extends Controller
 
     public function showImportOrders(Import $import)
     {
-        $query = ImportedData::query()->where('import_id', $import->id);
+        $query = ImportedData::query()
+            ->whereHas('import', function($q) {
+                $q->whereNull('deleted_at');
+            })
+            ->where('import_id', $import->id);
 
         $orders = $query->orderBy('order_date', 'desc')
                        ->paginate(10)
@@ -84,5 +88,11 @@ class ImportController extends Controller
             'orders' => $orders,
             'import' => $import
         ]);
+    }
+
+    public function destroy(Import $import)
+    {
+        $import->delete();
+        return redirect()->back()->with('success', 'Import deleted successfully');
     }
 } 
