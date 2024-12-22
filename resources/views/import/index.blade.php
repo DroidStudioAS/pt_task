@@ -18,8 +18,9 @@
                 <div class="form-group">
                     <label for="importType">Import Type</label>
                     <select class="form-control" id="importType" name="import_type">
-                        <option value="orders">Import Orders</option>
-                        <!-- Additional import types will be added dynamically -->
+                        @foreach($importNames as $type)
+                            <option value="{{ $type['key'] }}">{{ $type['name'] }}</option>
+                        @endforeach
                     </select>
                 </div>
 

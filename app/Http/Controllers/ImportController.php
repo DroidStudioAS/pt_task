@@ -22,12 +22,20 @@ class ImportController extends Controller
                 })->first()
             ];
         })->filter(function($type) {
-            return auth()->user()->hasPermission($type['permission_required'] ?? '');
+            return auth()->user()->can($config['permission_required'] ?? '');
         });
 
-        $requiredHeaders = array_keys(config('imports.orders.files.orders.headers_to_db'));
+        $importNames = collect(Config::get('imports'))->map(function($config, $key) {
+            return [
+                'key' => $key,
+                'name' => $config['name'],
+                'permission_required' => $config['permission_required']
+            ];
+        });
 
-        return view('import.index', compact('importTypes', 'requiredHeaders'));
+        $requiredHeaders = $importTypes->first()['headers'] ?? [];
+
+        return view('import.index', compact('importTypes', 'requiredHeaders', 'importNames'));
     }
 
     public function store(StoreImportRequest $request)
