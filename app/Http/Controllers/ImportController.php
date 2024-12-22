@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Import;
 use App\Models\ImportedData;
-use Illuminate\Http\Request;
+use App\Http\Requests\Import\StoreImportRequest;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessImportJob;
 use Illuminate\Support\Facades\Config;
@@ -25,19 +25,15 @@ class ImportController extends Controller
             return auth()->user()->hasPermission($type['permission_required'] ?? '');
         });
 
-        // Get headers directly from the config for orders without filtering
         $requiredHeaders = array_keys(config('imports.orders.files.orders.headers_to_db'));
 
         return view('import.index', compact('importTypes', 'requiredHeaders'));
     }
 
-    public function store(Request $request)
+    public function store(StoreImportRequest $request)
     {
-        $validated = $request->validate([
-            'import_type' => 'required|string',
-            'file' => 'required|file|mimes:xlsx,xls,csv'
-        ]);
-
+        $validated = $request->validated();
+        
         $importConfig = Config::get("imports.{$validated['import_type']}");
         
         if (!$importConfig) {
@@ -48,10 +44,8 @@ class ImportController extends Controller
             return back()->with('error', 'You do not have permission to perform this import.');
         }
 
-        // Store the file
         $path = $request->file('file')->store('imports');
         
-        // Create import record
         $import = Import::create([
             'user_id' => auth()->id(),
             'import_type' => $validated['import_type'],

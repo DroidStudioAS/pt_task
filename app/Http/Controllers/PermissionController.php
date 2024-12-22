@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permission;
-use Illuminate\Http\Request;
+use App\Http\Requests\Permission\StorePermissionRequest;
+use App\Http\Requests\Permission\UpdatePermissionRequest;
 
 class PermissionController extends Controller
 {
@@ -13,30 +14,17 @@ class PermissionController extends Controller
         return view('permissions.index', compact('permissions'));
     }
 
-    public function store(Request $request)
+    public function store(StorePermissionRequest $request)
     {
-        // Debugging: Log the request data
-        \Log::info('Request data:', $request->all());
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:permissions',
-            'description' => 'required|string'
-        ]);
-
-        Permission::create(['name' => $validated['name'], 'description' => $validated['description']]);
-
+        $validated = $request->validated();
+        Permission::create($validated);
         return redirect()->route('permissions.index')->with('success', 'Permission created successfully');
     }
 
-    public function update(Request $request, Permission $permission)
+    public function update(UpdatePermissionRequest $request, Permission $permission)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:permissions,name,' . $permission->id,
-            'description' => 'required|string'
-        ]);
-
+        $validated = $request->validated();
         $permission->update($validated);
-
         return redirect()->route('permissions.index')->with('success', 'Permission updated successfully');
     }
 
