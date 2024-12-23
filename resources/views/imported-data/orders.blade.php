@@ -150,32 +150,24 @@
             <table class="table table-hover text-nowrap">
                 <thead>
                     <tr>
-                        <th>Order Date</th>
-                        <th>Channel</th>
-                        <th>SKU</th>
-                        <th>Item Description</th>
-                        <th>Origin</th>
-                        <th>SO#</th>
-                        <th>Total Price</th>
-                        <th>Cost</th>
-                        <th>Shipping Cost</th>
-                        <th>Profit</th>
+                        @foreach($fillableFields as $field)
+                            <th>{{ ucwords(str_replace('_', ' ', $field)) }}</th>
+                        @endforeach
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($orders as $order)
                         <tr>
-                            <td>{{ $order->order_date }}</td>
-                            <td>{{ $order->channel }}</td>
-                            <td>{{ $order->sku }}</td>
-                            <td>{{ $order->item_description }}</td>
-                            <td>{{ $order->origin }}</td>
-                            <td>{{ $order->so_number }}</td>
-                            <td>${{ number_format($order->total_price, 2) }}</td>
-                            <td>${{ number_format($order->cost, 2) }}</td>
-                            <td>${{ number_format($order->shipping_cost, 2) }}</td>
-                            <td>${{ number_format($order->profit, 2) }}</td>
+                            @foreach($fillableFields as $field)
+                                <td>
+                                    @if(in_array($field, ['total_price', 'cost', 'shipping_cost', 'profit']))
+                                        ${{ number_format($order->$field, 2) }}
+                                    @else
+                                        {{ $order->$field }}
+                                    @endif
+                                </td>
+                            @endforeach
                             <td>
                                 <a href="#" class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i>
@@ -184,7 +176,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="text-center">No orders found</td>
+                            <td colspan="{{ count($fillableFields) + 1 }}" class="text-center">No orders found</td>
                         </tr>
                     @endforelse
                 </tbody>
