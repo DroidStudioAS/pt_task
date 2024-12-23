@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use League\Csv\Reader;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ImportFailedMail;
 
 class ProcessImportJob implements ShouldQueue
 {
@@ -55,6 +57,10 @@ class ProcessImportJob implements ShouldQueue
                 'status' => 'failed',
                 'logs' => "Import failed: " . $e->getMessage()
             ]);
+            
+            // Send failure notification email
+            Mail::send(new ImportFailedMail($this->import, $e->getMessage()));
+            
             throw $e;
         }
     }
