@@ -33,7 +33,10 @@ class ImportController extends Controller
             ];
         });
 
-        $requiredHeaders = $importTypes->first()['headers'] ?? [];
+        $requiredHeaders = collect(Config::get('imports'))->mapWithKeys(function($config, $key) {
+            $headers = collect($config['files'])->first()['headers_to_db'] ?? [];
+            return [$config['name'] => $headers];
+        })->toArray();
 
         return view('import.index', compact('importTypes', 'requiredHeaders', 'importNames'));
     }

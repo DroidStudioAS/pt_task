@@ -34,9 +34,9 @@
                     </div>
                 </div>
 
-                <div class="required-headers mt-4">
+                <div class="required-headers mt-4 mb-4">
                     <h5>Required Headers:</h5>
-                    <p class="text-muted">{{ implode(', ', $requiredHeaders) }}</p>
+                    <ul class="list-unstyled"></ul>
                 </div>
 
                 <button type="submit" class="btn btn-primary mt-3">Import</button>
@@ -51,12 +51,38 @@
 
 @section('js')
     <script>
+        // Add the headers data from PHP to JavaScript
+        const importHeaders = @json($requiredHeaders);
+
         $(document).ready(function() {
             // Update the file input label when a file is selected
             $('input[type="file"]').change(function(e){
                 var fileName = e.target.files[0].name;
                 $(this).next('.custom-file-label').html(fileName);
             });
+
+            // Function to update headers display
+            function updateHeaders() {
+                const selectedImportType = $('#importType option:selected').text();
+                const headers = importHeaders[selectedImportType] || {};
+                
+                let headersList = '<h5>Required Headers:</h5>';
+                headersList += '<ul class="list-unstyled">';
+                
+                for (const [excelHeader, dbField] of Object.entries(headers)) {
+                    headersList += `<li><code>${excelHeader}</code> → ${dbField}</li>`;
+                }
+                
+                headersList += '</ul>';
+                
+                $('.required-headers').html(headersList);
+            }
+
+            // Update headers when page loads
+            updateHeaders();
+
+            // Update headers when import type changes
+            $('#importType').change(updateHeaders);
         });
     </script>
 @stop 

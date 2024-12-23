@@ -56,7 +56,7 @@ return [
                     'Total Price' => 'total_price',
                     'Cost' => 'cost',
                     'Shipping Cost' => 'shipping_cost',
-                    'Profit' => 'profit',
+                    'asaa' => 'profit',
                 ],
                 'types' => [
                     'order_date' => 'date',
