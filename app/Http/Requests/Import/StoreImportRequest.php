@@ -22,8 +22,13 @@ class StoreImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'import_type' => 'required|string',
-            'file' => 'required|file|mimes:xlsx,xls,csv'
+            'import_type' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (!config("imports.{$value}")) {
+                    $fail('The selected import type is invalid.');
+                }
+            }],
+            'files' => 'required|array',
+            'files.*' => 'required|file|mimes:xlsx,xls,csv|max:10240' // 10MB limit per file
         ];
     }
 

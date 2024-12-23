@@ -25,11 +25,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="file">Select File</label>
+                    <label for="file">Select Files</label>
                     <div class="input-group">
                         <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="file" name="file" accept=".xlsx,.xls,.csv">
-                            <label class="custom-file-label" for="file">Choose file</label>
+                            <input type="file" class="custom-file-input" id="file" name="files[]" multiple accept=".xlsx,.xls,.csv">
+                            <label class="custom-file-label" for="file">Choose files</label>
                         </div>
                     </div>
                 </div>
@@ -55,10 +55,13 @@
         const importHeaders = @json($requiredHeaders);
 
         $(document).ready(function() {
-            // Update the file input label when a file is selected
+            // Update the file input label when files are selected
             $('input[type="file"]').change(function(e){
-                var fileName = e.target.files[0].name;
-                $(this).next('.custom-file-label').html(fileName);
+                var fileNames = Array.from(e.target.files).map(file => file.name);
+                var label = fileNames.length > 1 
+                    ? fileNames.length + ' files selected' 
+                    : fileNames[0];
+                $(this).next('.custom-file-label').html(label);
             });
 
             // Function to update headers display

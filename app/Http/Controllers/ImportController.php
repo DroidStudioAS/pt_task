@@ -8,6 +8,7 @@ use App\Http\Requests\Import\StoreImportRequest;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\ProcessImportJob;
 use Illuminate\Support\Facades\Config;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImportController extends Controller
 {
@@ -55,20 +56,23 @@ class ImportController extends Controller
             return back()->with('error', 'You do not have permission to perform this import.');
         }
 
-        $path = $request->file('file')->store('imports');
-        
-        $import = Import::create([
-            'user_id' => auth()->id(),
-            'import_type' => $validated['import_type'],
-            'file_name' => $request->file('file')->getClientOriginalName(),
-            'file_path' => $path,
-            'status' => 'pending'
-        ]);
+        // Process each uploaded file
+        foreach ($request->file('files') as $file) {
+            $path = $file->store('imports');
+            
+            $import = Import::create([
+                'user_id' => auth()->id(),
+                'import_type' => $validated['import_type'],
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $path,
+                'status' => 'pending'
+            ]);
 
-        ProcessImportJob::dispatch($import);
+            ProcessImportJob::dispatch($import);
+        }
 
         return redirect()->route('imports.history')
-            ->with('success', 'File uploaded successfully. Import is being processed.');
+            ->with('success', count($request->file('files')) . ' files uploaded successfully. Imports are being processed.');
     }
 
     public function viewLogs(Import $import)
